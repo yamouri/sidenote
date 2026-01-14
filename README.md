@@ -2,6 +2,8 @@
 
 A minimalist, auto-saving note-taking app for Linux.
 
+![Image.png](image.png)
+
 ## Features
 
 - **Zero buttons, zero menus** - Just type
@@ -13,6 +15,7 @@ A minimalist, auto-saving note-taking app for Linux.
 ```bash
 git clone https://github.com/yamouri/sidenote.git
 cd sidenote
+go mod tidy
 go build -o sidenote
 sudo cp sidenote /usr/local/bin/
 ```
