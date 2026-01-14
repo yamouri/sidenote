@@ -1,4 +1,9 @@
 # Sidenote
+![Platform](https://img.shields.io/badge/platform-linux-blue)
+![Type](https://img.shields.io/badge/type-desktop--app-lightgrey)
+![Language](https://img.shields.io/github/languages/top/yamouri/sidenote)
+![Release](https://img.shields.io/github/v/release/yamouri/sidenote)
+![License](https://img.shields.io/github/license/yamouri/sidenote)
 
 A minimalist, auto-saving note-taking app for Linux.
 
