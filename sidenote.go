@@ -18,15 +18,20 @@ const (
 	appName    = "Sidenote"
 	fileName   = "sidenote.txt"
 	folderName = "Sidenote"
+
+	windowWidth  = 600
+	windowHeight = 500
+
+	saveDelay = 500 * time.Millisecond
 )
 
 var (
-	savePath string
-	textArea *widget.Entry
+	savePath  string
+	textArea  *widget.Entry
+	saveTimer *time.Timer
 )
 
 func main() {
-	// Parse command line arguments
 	helpFlag := flag.Bool("h", false, "Show help")
 	helpFlagLong := flag.Bool("help", false, "Show help")
 	cleanFlag := flag.Bool("c", false, "Clean - backup current file and create new one")
@@ -38,9 +43,18 @@ func main() {
 		return
 	}
 
-	configDir, _ := os.UserConfigDir()
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to determine config directory: %v\n", err)
+		os.Exit(1)
+	}
+
 	savePath = filepath.Join(configDir, folderName, fileName)
-	os.MkdirAll(filepath.Dir(savePath), 0755)
+
+	if err := os.MkdirAll(filepath.Dir(savePath), 0700); err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create config directory: %v\n", err)
+		os.Exit(1)
+	}
 
 	if *cleanFlag || *cleanFlagLong {
 		backupCurrentFile()
@@ -55,26 +69,23 @@ func runApp() {
 	myApp := app.NewWithID("com.sidenote.app")
 	window := myApp.NewWindow(appName)
 
-	window.Resize(fyne.NewSize(600, 500))
+	window.Resize(fyne.NewSize(windowWidth, windowHeight))
 	window.SetPadded(true)
+	window.SetIcon(theme.DocumentIcon())
 
 	textArea = widget.NewMultiLineEntry()
 	textArea.Wrapping = fyne.TextWrapWord
-	textArea.TextStyle = fyne.TextStyle{Monospace: false}
 	textArea.SetPlaceHolder("Type your notes here...")
 
 	loadContent()
 
-	textArea.OnChanged = func(text string) {
-		saveContent()
+	textArea.OnChanged = func(_ string) {
+		debouncedSave()
 	}
 
 	scrollContainer := container.NewScroll(textArea)
-	scrollContainer.SetMinSize(fyne.NewSize(580, 480))
-
 	content := container.NewBorder(nil, nil, nil, nil, scrollContainer)
 	window.SetContent(content)
-	window.SetIcon(theme.DocumentIcon())
 
 	window.SetCloseIntercept(func() {
 		saveContent()
@@ -86,16 +97,34 @@ func runApp() {
 
 func loadContent() {
 	content, err := os.ReadFile(savePath)
-	if err == nil {
-		textArea.SetText(string(content))
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "Failed to read file: %v\n", err)
+		}
+		return
 	}
+	textArea.SetText(string(content))
+}
+
+func debouncedSave() {
+	if saveTimer != nil {
+		saveTimer.Stop()
+	}
+	saveTimer = time.AfterFunc(saveDelay, saveContent)
 }
 
 func saveContent() {
 	text := textArea.Text
-	err := os.WriteFile(savePath, []byte(text), 0644)
-	if err != nil {
-		fmt.Printf("Save error: %v\n", err)
+	dir := filepath.Dir(savePath)
+	tmpPath := filepath.Join(dir, "."+fileName+".tmp")
+
+	if err := os.WriteFile(tmpPath, []byte(text), 0600); err != nil {
+		fmt.Fprintf(os.Stderr, "Save failed: %v\n", err)
+		return
+	}
+
+	if err := os.Rename(tmpPath, savePath); err != nil {
+		fmt.Fprintf(os.Stderr, "Replace failed: %v\n", err)
 	}
 }
 
@@ -105,17 +134,17 @@ func backupCurrentFile() {
 		return
 	}
 
-	timestamp := time.Now().Format("20060102_150405")
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
 	backupPath := savePath + "." + timestamp + ".bkp"
 
-	err := os.Rename(savePath, backupPath)
-	if err != nil {
-		fmt.Printf("Backup failed: %v\n", err)
+	if err := os.Rename(savePath, backupPath); err != nil {
+		fmt.Fprintf(os.Stderr, "Backup failed: %v\n", err)
 		return
 	}
 
-	// Create new empty file
-	os.WriteFile(savePath, []byte(""), 0644)
+	if err := os.WriteFile(savePath, []byte(""), 0600); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create new file: %v\n", err)
+	}
 }
 
 func printHelp() {
@@ -126,5 +155,5 @@ func printHelp() {
 	fmt.Println("  sidenote -h, --help         Show this help")
 	fmt.Println("  sidenote -c, --clean        Backup current notes and create new file")
 	fmt.Println()
-	fmt.Println("Notes are auto-saved to: ~/.config/Sidenote/sidenote.txt")
+	fmt.Println("Notes are saved to: ~/.config/Sidenote/sidenote.txt")
 }

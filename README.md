@@ -11,8 +11,8 @@ A minimalist, auto-saving note-taking app for Linux.
 
 ## Features
 
-- **Zero buttons, zero menus** - Just type
-- **Auto-save on every keystroke** - Wow
+- **Zero buttons, zero menus** 
+- **Auto-save constantly**
 
 ## Installation
 
@@ -20,6 +20,7 @@ A minimalist, auto-saving note-taking app for Linux.
 ```bash
 git clone https://github.com/yamouri/sidenote.git
 cd sidenote
+go get fyne.io/fyne/v2@v2.7.2
 go mod tidy
 go build -o sidenote
 sudo cp sidenote /usr/local/bin/
@@ -27,8 +28,8 @@ sudo cp sidenote /usr/local/bin/
 
 ## Dependencies
 
-- Go 1.21+
-- Fyne 
+- Go 1.21+ (Tested on 1.25.5)
+- Fyne  2.7.2
 
 ## Usage
 
