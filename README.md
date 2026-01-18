@@ -20,16 +20,16 @@ A minimalist, auto-saving note-taking app for Linux.
 ```bash
 git clone https://github.com/yamouri/sidenote.git
 cd sidenote
+go get fyne.io/fyne/v2@v2.7.2
 go mod tidy
-go get fyne.io/fyne/v2
 go build -o sidenote
 sudo cp sidenote /usr/local/bin/
 ```
 
 ## Dependencies
 
-- Go 1.21+
-- Fyne  2.x
+- Go 1.21+ (Tested on 1.25.5)
+- Fyne  2.7.2
 
 ## Usage
 
