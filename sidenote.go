@@ -105,7 +105,7 @@ func backupCurrentFile() {
 		return
 	}
 
-	timestamp := time.Now().Format("20060102_150405")
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
 	backupPath := savePath + "." + timestamp + ".bkp"
 
 	err := os.Rename(savePath, backupPath)
